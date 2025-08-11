@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'apiService.dart';
+import '../services/IniciarSesionUsuarioService.dart';
 import 'MenuPrincipalSesion.dart';
-import 'RegistrarUsuario.dart';
-import 'RecuperarContrasena.dart';
+import '../views/RegistrarUsuarioView.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,37 +24,90 @@ class _LoginScreenState extends State<LoginScreen> {
   final Color textoClaro = Colors.white70;
 
   void _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _cargando = true);
+    if (!_formKey.currentState!.validate()) {
+      Alert(
+        context: context,
+        type: AlertType.info,
+        title: "Hay Campos vacios",
+        desc: "Completar todos los campos obligatorios.",
+        buttons: [
+          DialogButton(
+            child: const Text("OK", style: TextStyle(color: Colors.white)),
+            onPressed: () => Navigator.pop(context),
+            color: Colors.blue,
+          ),
+        ],
+      ).show();
+      return; // Detener el login
+    }
 
-      final token = await loginUsuario(
-        correoController.text.trim(),
-        contrasenaController.text.trim(),
+    setState(() => _cargando = true);
+
+    final response = await loginUsuario(
+      correoController.text.trim(),
+      contrasenaController.text.trim(),
+    );
+
+    setState(() => _cargando = false);
+
+    if (response != null) {
+      final String token = response['token'];
+      final String rol = response['usuario']['rol'];
+      final String nombre = response['usuario']['nombre'] ?? '';
+      final String correo = response['usuario']['correo'] ?? '';
+      final String numerodocumento =
+          response['usuario']['numerodocumento']?.toString() ?? '';
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', token);
+      await prefs.setString('rol', rol);
+      await prefs.setString('nombre', nombre);
+      await prefs.setString('correo', correo);
+      await prefs.setString('numerodocumento', numerodocumento);
+
+      print('Token guardado');
+      print('Rol guardado');
+      print('Nombre guardado');
+      print('Correo guardado');
+      print('Documento guardado');
+
+      if (!mounted) return;
+
+      Alert alert = Alert(
+        context: context,
+        type: AlertType.success,
+        title: "Bienvenido",
+        desc: "Inicio de sesión exitoso",
+        buttons: [],
       );
-
-      setState(() => _cargando = false);
-
-      if (token != null) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Inicio de sesión exitoso')),
-        );
-
+      alert.show();
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.pop(context);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MenuPrincipalSesion()),
+          MaterialPageRoute(
+            builder: (context) => MenuPrincipalSesion(rol: rol),
+          ),
         );
-      } else {
-        if (!mounted) return;
+      });
+    } else {
+      if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Correo o contraseña incorrectos')),
-        );
-      }
+      Alert(
+        context: context,
+        type: AlertType.error,
+        title: "Error",
+        desc: "Correo o contraseña incorrectos",
+        buttons: [
+          DialogButton(
+            child: const Text(
+              "Intentar de nuevo",
+              style: TextStyle(color: Colors.white),
+            ),
+            onPressed: () => Navigator.pop(context),
+            color: Colors.red,
+          ),
+        ],
+      ).show();
     }
   }
 
@@ -79,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Icon(Icons.lock_outline, size: 80, color: Colors.white),
                   const SizedBox(height: 16),
                   const Text(
-                    "Iniciar Sesión",
+                    "Iniciar Sesion",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -92,8 +145,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(color: Colors.white70),
                   ),
                   const SizedBox(height: 30),
-                  _buildTextField("Correo electrónico", correoController, icon: Icons.email),
-                  _buildTextField("Contraseña", contrasenaController, icon: Icons.lock, isPassword: true),
+                  _buildTextField(
+                    "Correo electronico",
+                    correoController,
+                    icon: Icons.email,
+                  ),
+                  _buildTextField(
+                    "Contraseña",
+                    contrasenaController,
+                    icon: Icons.lock,
+                    isPassword: true,
+                  ),
                   const SizedBox(height: 24),
                   _cargando
                       ? const CircularProgressIndicator()
@@ -106,14 +168,26 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text("Iniciar Sesión", style: TextStyle(fontSize: 16)),
+                          child: const Text(
+                            "Iniciar Sesion",
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                   const SizedBox(height: 10),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const RecuperarContrasena()),
+                        MaterialPageRoute(
+                          builder: (_) => const Scaffold(
+                            body: Center(
+                              child: Text(
+                                "Funcionalidad de recuperación de contraseña proximamente.",
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                          ),
+                        ),
                       );
                     },
                     child: const Text(
@@ -126,7 +200,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const RegistrarUsuario()),
+                        MaterialPageRoute(
+                          builder: (_) => const RegistrarUsuario(),
+                        ),
                       );
                     },
                     child: const Text(
@@ -143,8 +219,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller,
-      {IconData? icon, bool isPassword = false}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    IconData? icon,
+    bool isPassword = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
@@ -159,7 +239,8 @@ class _LoginScreenState extends State<LoginScreen> {
           prefixIcon: icon != null ? Icon(icon, color: Colors.white54) : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
+        validator: (value) =>
+            value!.isEmpty ? 'Este campo es obligatorio' : null,
       ),
     );
   }

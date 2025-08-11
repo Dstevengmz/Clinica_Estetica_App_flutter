@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'LoginScreen.dart';
+import 'PantallaLoginview.dart';
 
 class MenuDrawerSinSesion extends StatelessWidget {
   final Color fondo = const Color(0xFF0F172A);
@@ -55,9 +55,7 @@ class MenuDrawerSinSesion extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.info_outline, color: linkAzul),
             title: Text("Acerca de", style: TextStyle(color: texto)),
-            onTap: () {
-              // Mostrar información de la app
-            },
+            onTap: () {},
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'LoginScreen.dart';
+import 'PantallaLoginview.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class MenuDrawerPerfil extends StatefulWidget {
   @override
@@ -20,7 +21,7 @@ class _MenuDrawerPerfilState extends State<MenuDrawerPerfil> {
   String nombre = '';
   String correo = '';
   String rol = '';
-  String cc = '';
+  String numerodocumento = '';
 
   @override
   void initState() {
@@ -34,7 +35,7 @@ class _MenuDrawerPerfilState extends State<MenuDrawerPerfil> {
       nombre = prefs.getString('nombre') ?? 'Nombre no disponible';
       correo = prefs.getString('correo') ?? 'Correo no disponible';
       rol = prefs.getString('rol') ?? 'Sin rol';
-      cc = prefs.getString('cc') ?? 'No registrado';
+      numerodocumento = prefs.getString('numerodocumento') ?? 'No registrado';
     });
   }
 
@@ -82,12 +83,18 @@ class _MenuDrawerPerfilState extends State<MenuDrawerPerfil> {
           ListTile(
             leading: Icon(Icons.badge, color: detalle),
             title: Text("Rol", style: TextStyle(color: texto)),
-            subtitle: Text(rol, style: TextStyle(color: texto.withOpacity(0.6))),
+            subtitle: Text(
+              rol,
+              style: TextStyle(color: texto.withOpacity(0.6)),
+            ),
           ),
           ListTile(
             leading: Icon(Icons.credit_card, color: detalle),
             title: Text("C.C.", style: TextStyle(color: texto)),
-            subtitle: Text(cc, style: TextStyle(color: texto.withOpacity(0.6))),
+            subtitle: Text(
+              numerodocumento,
+              style: TextStyle(color: texto.withOpacity(0.6)),
+            ),
           ),
           const Divider(color: Colors.white24),
           ListTile(
@@ -108,16 +115,56 @@ class _MenuDrawerPerfilState extends State<MenuDrawerPerfil> {
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: Text("Cerrar sesión", style: TextStyle(color: texto)),
-            onTap: () async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              await prefs.clear(); // Elimina todos los datos guardados
+            onTap: () {
+              Alert(
+                context: context,
+                type: AlertType.warning,
+                title: "¿Estás seguro de que deseas cerrar sesión?",
+                desc: "¡No podrás revertir esto!",
+                buttons: [
+                  DialogButton(
+                    child: const Text(
+                      "Cancelar",
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    color: Colors.grey,
+                  ),
+                  DialogButton(
+                    child: const Text(
+                      "Cerrar sesión",
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                    onPressed: () async {
+                      SharedPreferences prefs =
+                          await SharedPreferences.getInstance();
+                      await prefs.clear();
+                      Navigator.pop(context);
 
-              if (!mounted) return;
+                      Alert alert = Alert(
+                        context: context,
+                        type: AlertType.success,
+                        title: "Sesión cerrada",
+                        desc: "Has cerrado sesión correctamente.",
+                        buttons: [],
+                      );
 
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
+                      alert.show();
+
+                      Future.delayed(const Duration(seconds: 2), () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                        );
+                      });
+                    },
+                    color: Colors.redAccent,
+                  ),
+                ],
+              ).show();
             },
           ),
         ],

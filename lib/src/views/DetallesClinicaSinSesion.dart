@@ -1,7 +1,5 @@
-// ✅ DetallesClinicaSinSesion.dart corregido y con paleta de colores consistente
-
 import 'package:flutter/material.dart';
-import 'LoginScreen.dart';
+import 'PantallaLoginview.dart';
 
 class DetallesClinicaSinSesion extends StatelessWidget {
   final String imageUrl;
@@ -16,12 +14,11 @@ class DetallesClinicaSinSesion extends StatelessWidget {
     required this.precio,
   });
 
-  // Paleta de colores reutilizable
-   final Color fondo = const Color(0xFF0D1B2A); // fondo general
-  final Color encabezado = const Color(0xFF1B263B); // appbar o contenedor
-  final Color campos = const Color(0xFF415A77); // campos de texto o tarjetas
-  final Color boton = const Color(0xFF2ECC71); // botones verdes
-  final Color texto = const Color(0xFFE0E1DD); // texto blanco grisáceo
+  final Color fondo = const Color(0xFF0D1B2A);
+  final Color encabezado = const Color(0xFF1B263B);
+  final Color campos = const Color(0xFF415A77);
+  final Color boton = const Color(0xFF2ECC71);
+  final Color texto = const Color(0xFFE0E1DD);
 
   @override
   Widget build(BuildContext context) {
@@ -108,10 +105,7 @@ class DetallesClinicaSinSesion extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: TextStyle(
-                fontSize: 18,
-                color: texto,
-              ),
+              style: TextStyle(fontSize: 18, color: texto),
             ),
           ),
         ],

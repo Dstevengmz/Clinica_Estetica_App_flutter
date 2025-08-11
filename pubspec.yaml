@@ -11,8 +11,8 @@ dependencies:
     sdk: flutter
   http: ^0.13.6
   shared_preferences: ^2.0.15
-
-
+  flutter_dotenv: ^5.0.2
+  rflutter_alert: ^2.0.7
 
 dev_dependencies:
   flutter_test:
@@ -21,3 +21,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env
