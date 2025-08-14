@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import '../../widgets/menulateral.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/IniciarSesionUsuarioService.dart';
-import 'MenuPrincipalSesion.dart';
-import '../views/RegistrarUsuarioView.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import '../../services/IniciarSesionUsuarioService.dart';
+import '../pantallaprincipal.dart';
+import '../usuario/panelusuario.dart';
+import '../doctor/paneldoctor.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class IniciarSesion extends StatefulWidget {
+  const IniciarSesion({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<IniciarSesion> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<IniciarSesion> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController correoController = TextEditingController();
   final TextEditingController contrasenaController = TextEditingController();
@@ -24,90 +26,85 @@ class _LoginScreenState extends State<LoginScreen> {
   final Color textoClaro = Colors.white70;
 
   void _login() async {
-    if (!_formKey.currentState!.validate()) {
-      Alert(
-        context: context,
-        type: AlertType.info,
-        title: "Hay Campos vacios",
-        desc: "Completar todos los campos obligatorios.",
-        buttons: [
-          DialogButton(
-            child: const Text("OK", style: TextStyle(color: Colors.white)),
-            onPressed: () => Navigator.pop(context),
-            color: Colors.blue,
-          ),
-        ],
-      ).show();
-      return; // Detener el login
-    }
+    if (_formKey.currentState!.validate()) {
+      setState(() => _cargando = true);
 
-    setState(() => _cargando = true);
-
-    final response = await loginUsuario(
-      correoController.text.trim(),
-      contrasenaController.text.trim(),
-    );
-
-    setState(() => _cargando = false);
-
-    if (response != null) {
-      final String token = response['token'];
-      final String rol = response['usuario']['rol'];
-      final String nombre = response['usuario']['nombre'] ?? '';
-      final String correo = response['usuario']['correo'] ?? '';
-      final String numerodocumento =
-          response['usuario']['numerodocumento']?.toString() ?? '';
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', token);
-      await prefs.setString('rol', rol);
-      await prefs.setString('nombre', nombre);
-      await prefs.setString('correo', correo);
-      await prefs.setString('numerodocumento', numerodocumento);
-
-      print('Token guardado');
-      print('Rol guardado');
-      print('Nombre guardado');
-      print('Correo guardado');
-      print('Documento guardado');
-
-      if (!mounted) return;
-
-      Alert alert = Alert(
-        context: context,
-        type: AlertType.success,
-        title: "Bienvenido",
-        desc: "Inicio de sesión exitoso",
-        buttons: [],
+      final token = await loginUsuario(
+        correoController.text.trim(),
+        contrasenaController.text.trim(),
       );
-      alert.show();
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.pop(context);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MenuPrincipalSesion(rol: rol),
-          ),
-        );
-      });
-    } else {
-      if (!mounted) return;
 
-      Alert(
-        context: context,
-        type: AlertType.error,
-        title: "Error",
-        desc: "Correo o contraseña incorrectos",
-        buttons: [
-          DialogButton(
-            child: const Text(
-              "Intentar de nuevo",
-              style: TextStyle(color: Colors.white),
+      setState(() => _cargando = false);
+
+      if (token != null) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+
+        // Extraer rol de la respuesta
+        final String rol = token['usuario']?['rol']?.toString() ?? '';
+
+        // Intentar detectar nombre del campo token en la respuesta
+        String? rawToken;
+        if (token.containsKey('token')) {
+          rawToken = token['token']?.toString();
+        } else if (token.containsKey('access_token')) {
+          rawToken = token['access_token']?.toString();
+        } else if (token.containsKey('jwt')) {
+          rawToken = token['jwt']?.toString();
+        }
+
+        if (rawToken != null && rawToken.isNotEmpty) {
+          await prefs.setString('token', rawToken);
+        }
+        await prefs.setString('rol', rol);
+
+        if (!mounted) return;
+
+        final destino = () {
+          final r = rol.toUpperCase();
+          if (r == 'DOCTOR') return const PantallaDoctor();
+          if (r == 'USUARIO' || r == 'CLIENTE') return const PantallaUsuario();
+          return PantallaPrincipal(rol: rol);
+        }();
+
+        Alert(
+          context: context,
+          title: 'Bienvenido',
+          desc: 'Sesión iniciada correctamente.',
+          image: Image.asset('assets/img/success.png', height: 90),
+          buttons: [
+            DialogButton(
+              child: const Text(
+                'CONTINUAR',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => destino),
+                );
+              },
+              gradient: const LinearGradient(
+                colors: [Color(0xFF43A047), Color(0xFF2E7D32)],
+              ),
             ),
-            onPressed: () => Navigator.pop(context),
-            color: Colors.red,
-          ),
-        ],
-      ).show();
+          ],
+        ).show();
+      } else {
+        if (!mounted) return;
+        Alert(
+          context: context,
+          type: AlertType.error,
+          title: "Usuario o contraseña incorrectos",
+          desc: "Por favor, verifica tus credenciales e intenta nuevamente.",
+          buttons: [],
+        ).show();
+        Future.delayed(const Duration(seconds: 2), () {
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+        });
+      }
     }
   }
 
@@ -115,6 +112,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: fondoOscuro,
+      drawer: MenuLateral(
+        nombreUsuario: 'Invitado',
+        onLogout: () {
+          Navigator.of(context).pop();
+        },
+      ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -132,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Icon(Icons.lock_outline, size: 80, color: Colors.white),
                   const SizedBox(height: 16),
                   const Text(
-                    "Iniciar Sesion",
+                    "Iniciar Sesión",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -146,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 30),
                   _buildTextField(
-                    "Correo electronico",
+                    "Correo electrónico",
                     correoController,
                     icon: Icons.email,
                   ),
@@ -169,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           child: const Text(
-                            "Iniciar Sesion",
+                            "Iniciar Sesión",
                             style: TextStyle(fontSize: 16),
                           ),
                         ),
@@ -182,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           builder: (_) => const Scaffold(
                             body: Center(
                               child: Text(
-                                "Funcionalidad de recuperación de contraseña proximamente.",
+                                "Funcionalidad de recuperación de contraseña próximamente.",
                                 style: TextStyle(fontSize: 18),
                               ),
                             ),
@@ -201,7 +209,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const RegistrarUsuario(),
+                          builder: (_) => const Scaffold(
+                            body: Center(
+                              child: Text(
+                                "Pantalla de registro próximamente.",
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                          ),
                         ),
                       );
                     },

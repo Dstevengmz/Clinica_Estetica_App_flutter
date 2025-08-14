@@ -16,9 +16,30 @@ class ProcedimientoService {
     final response = await http.get(url);
     if (response.statusCode == 200) {
       final datos = json.decode(response.body);
-      return (datos as List)
-          .map((item) => Procedimiento.fromJson(item))
-          .toList();
+      String limpiarBase(String v) {
+        while (v.endsWith('/')) {
+          v = v.substring(0, v.length - 1);
+        }
+        return v;
+      }
+
+      final baseLimpia = limpiarBase(baseUrl);
+      return (datos as List).map((item) {
+        final p = Procedimiento.fromJson(item);
+        final raw = p.imagen.trim();
+        final completa = raw.isEmpty
+            ? ''
+            : (raw.startsWith('http')
+                  ? raw
+                  : '$baseLimpia/${raw.startsWith('/') ? raw.substring(1) : raw}');
+        return Procedimiento(
+          imagen: completa,
+          nombre: p.nombre,
+          duracion: p.duracion,
+          precio: p.precio,
+          requiereEvaluacion: p.requiereEvaluacion,
+        );
+      }).toList();
     } else {
       throw Exception('Error al cargar procedimientos');
     }

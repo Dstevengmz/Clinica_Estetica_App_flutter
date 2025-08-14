@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'MenuPrincipalview.dart';
-import 'DashboardDoctorview.dart';
-import 'DashboardUsuarioview.dart';
+import 'views/pantallaprincipal.dart';
+import 'views/iniciodesesion/iniciarsesion.dart';
+import 'views/usuario/panelusuario.dart';
+import 'views/doctor/paneldoctor.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,38 +16,33 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _verificarTokenYRedirigir();
+    _decidirNavegacion();
   }
 
-  void _verificarTokenYRedirigir() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    String? token = prefs.getString('token');
-    String? rol = prefs.getString('rol');
-
-    await Future.delayed(const Duration(seconds: 3));
-
+  Future<void> _decidirNavegacion() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final rol = prefs.getString('rol');
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
     if (token != null && token.isNotEmpty) {
-      if (rol == 'doctor') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => PantallaDoctor()),
-        );
-      } else if (rol == 'usuario') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => PantallaUsuario()),
-        );
+      final r = (rol ?? '').toUpperCase();
+      Widget destino;
+      if (r == 'DOCTOR') {
+        destino = const PantallaDoctor();
+      } else if (r == 'USUARIO' || r == 'CLIENTE') {
+        destino = const PantallaUsuario();
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => MenuPrincipalSesion()),
-        );
+        destino = PantallaPrincipal(rol: rol);
       }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => destino),
+      );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => MenuPrincipalSesion()),
+        MaterialPageRoute(builder: (_) => const IniciarSesion()),
       );
     }
   }

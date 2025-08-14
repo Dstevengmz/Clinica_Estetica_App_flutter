@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'PantallaLoginview.dart';
 
-class DetallesClinicaSinSesion extends StatelessWidget {
+class DetallesClinica extends StatelessWidget {
   final String imageUrl;
   final String nombre;
   final int duracion;
   final int precio;
 
-  DetallesClinicaSinSesion({
+  DetallesClinica({
     required this.imageUrl,
     required this.nombre,
     required this.duracion,
@@ -65,9 +64,10 @@ class DetallesClinicaSinSesion extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Pronto podrás agendar tu cita desde aquí"),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -78,7 +78,7 @@ class DetallesClinicaSinSesion extends StatelessWidget {
                 ),
                 textStyle: const TextStyle(fontSize: 18),
               ),
-              child: const Text('Inicia sesión para realizar una cita'),
+              child: const Text('Agendar cita'),
             ),
           ],
         ),

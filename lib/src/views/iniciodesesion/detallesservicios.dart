@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
-class DetallesClinica extends StatelessWidget {
+class DetallesClinicaSinSesion extends StatelessWidget {
   final String imageUrl;
   final String nombre;
   final int duracion;
   final int precio;
 
-  DetallesClinica({
+  DetallesClinicaSinSesion({
     required this.imageUrl,
     required this.nombre,
     required this.duracion,
     required this.precio,
   });
 
-   final Color fondo = const Color(0xFF0D1B2A); // fondo general
-  final Color encabezado = const Color(0xFF1B263B); // appbar o contenedor
-  final Color campos = const Color(0xFF415A77); // campos de texto o tarjetas
-  final Color boton = const Color(0xFF2ECC71); // botones verdes
-  final Color texto = const Color(0xFFE0E1DD); // texto blanco grisáceo
+  final Color fondo = const Color(0xFF0D1B2A);
+  final Color encabezado = const Color(0xFF1B263B);
+  final Color campos = const Color(0xFF415A77);
+  final Color boton = const Color(0xFF2ECC71);
+  final Color texto = const Color(0xFFE0E1DD);
 
   @override
   Widget build(BuildContext context) {
@@ -64,11 +64,7 @@ class DetallesClinica extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Pronto podrás agendar tu cita desde aquí"),
-                  ),
-                );
+                Navigator.pushNamed(context, '/iniciarsesion');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: boton,
@@ -78,7 +74,7 @@ class DetallesClinica extends StatelessWidget {
                 ),
                 textStyle: const TextStyle(fontSize: 18),
               ),
-              child: const Text('Agendar cita'),
+              child: const Text('Inicia sesión para realizar una cita'),
             ),
           ],
         ),
@@ -105,10 +101,7 @@ class DetallesClinica extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: TextStyle(
-                fontSize: 18,
-                color: texto,
-              ),
+              style: TextStyle(fontSize: 18, color: texto),
             ),
           ),
         ],

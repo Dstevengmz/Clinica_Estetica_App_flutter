@@ -1,31 +1,34 @@
 import 'package:flutter/material.dart';
-import '../services/ProcedimientoSerivice.dart';
+import '../widgets/menulateral.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/ProcedimientoModel.dart';
-import 'DetallesClinica.dart';
-import 'RegistrarUsuarioView.dart';
-import 'PantallaLoginview.dart';
-import 'menuDrawerPerfil.dart'; // Drawer del doctor que quieres reutilizar
+import '../services/ProcedimientoSerivice.dart';
+import '../views/iniciodesesion/detallesservicios.dart';
+import '../widgets/detallesdeservicios.dart';
 
-class PantallaUsuario extends StatefulWidget {
-  const PantallaUsuario({super.key});
+class PantallaPrincipal extends StatefulWidget {
+  final String? rol;
+  const PantallaPrincipal({Key? key, this.rol}) : super(key: key);
 
   @override
-  State<PantallaUsuario> createState() => _PantallaUsuarioState();
+  State<PantallaPrincipal> createState() => _PantallaPrincipalState();
 }
 
-class _PantallaUsuarioState extends State<PantallaUsuario> {
+class _PantallaPrincipalState extends State<PantallaPrincipal> {
+  final Color fondoOscuro = const Color(0xFF1B2430);
+  final Color segundario = const Color(0xFF334155);
+  final Color texto = const Color(0xFFFFFFFF);
+
   List<Procedimiento> procedimientos = [];
   bool cargando = true;
-
-  final Color fondo = const Color(0xFF0F172A);
-  final Color primario = const Color(0xFF1E293B);
-
-  int _paginaActual = 1;
+  String? _rolCargado;
+  bool _cargandoRol = false;
 
   @override
   void initState() {
     super.initState();
     _cargarProcedimientos();
+    _cargarRolSiNecesario();
   }
 
   Future<void> _cargarProcedimientos() async {
@@ -41,49 +44,47 @@ class _PantallaUsuarioState extends State<PantallaUsuario> {
     }
   }
 
-  void _onTapBottomNavigation(int index) {
-    setState(() {
-      _paginaActual = index;
-    });
+  Future<void> cerrarSesion(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    await prefs.remove('rol');
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/iniciarsesion');
+  }
 
-    switch (index) {
-      case 0: // Inicio
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => PantallaUsuario()),
-        );
-        break;
-      case 1: // Procedimientos (actual pantalla)
-        break;
-      case 2: // Perfil (mismo drawer del doctor)
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => MenuDrawerPerfil()),
-        );
-        break;
-      case 3: // Registrar usuario
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => RegistrarUsuario()),
-        );
-        break;
-      case 4: // Cerrar sesión / login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => LoginScreen()),
-        );
-        break;
-    }
+  Future<void> _cargarRolSiNecesario() async {
+    if (widget.rol != null && widget.rol!.isNotEmpty) return;
+    setState(() => _cargandoRol = true);
+    final prefs = await SharedPreferences.getInstance();
+    final rol = prefs.getString('rol');
+    if (!mounted) return;
+    setState(() {
+      _rolCargado = rol;
+      _cargandoRol = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: fondo,
-      drawer: MenuDrawerPerfil(),
+      backgroundColor: fondoOscuro,
       appBar: AppBar(
-        title: const Text('Bienvenido Usuario'),
-        backgroundColor: primario,
+        title: const Text('Servicios Disponibles'),
+        backgroundColor: Colors.deepPurple,
+      ),
+      drawer: MenuLateral(
+        nombreUsuario: _cargandoRol
+            ? 'Cargando...'
+            : ((widget.rol ?? _rolCargado) == null ||
+                      (widget.rol ?? _rolCargado)!.isEmpty
+                  ? 'Invitado'
+                  : 'Rol: ${widget.rol ?? _rolCargado}'),
+        rol: widget.rol ?? _rolCargado,
+        onLogout:
+            ((widget.rol ?? _rolCargado) == null ||
+                (widget.rol ?? _rolCargado)!.isEmpty)
+            ? null
+            : () => cerrarSesion(context),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -97,19 +98,7 @@ class _PantallaUsuarioState extends State<PantallaUsuario> {
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     elevation: 2,
                     child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DetallesClinica(
-                              imageUrl: proc.imagen,
-                              nombre: proc.nombre,
-                              duracion: proc.duracion,
-                              precio: proc.precio,
-                            ),
-                          ),
-                        );
-                      },
+                      onTap: () => _abrirDetalle(proc),
                       child: Row(
                         children: [
                           ClipRRect(
@@ -143,14 +132,13 @@ class _PantallaUsuarioState extends State<PantallaUsuario> {
                                     proc.nombre,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text("💲 Precio: \$${proc.precio}"),
                                   Text("⏱️ Duración: ${proc.duracion} min"),
                                   Text(
-                                    "🩺 Evaluación: ${proc.requiereEvaluacion == 1 ? 'Sí' : 'No'}",
+                                    "🩺 Evaluación: ${(proc.requiereEvaluacion == 1) ? 'Sí' : 'No'}",
                                   ),
                                 ],
                               ),
@@ -171,26 +159,41 @@ class _PantallaUsuarioState extends State<PantallaUsuario> {
                 },
               ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _paginaActual,
-        onTap: _onTapBottomNavigation,
-        selectedItemColor: Colors.blueAccent,
-        unselectedItemColor: primario.withOpacity(0.5),
-        backgroundColor: primario,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services),
-            label: 'Procedimientos',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.app_registration),
-            label: 'Registrar',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.logout), label: 'Salir'),
-        ],
-      ),
     );
+  }
+
+  Future<void> _abrirDetalle(Procedimiento proc) async {
+    String? rolActual = widget.rol ?? _rolCargado;
+    if ((rolActual == null || rolActual.isEmpty)) {
+      final prefs = await SharedPreferences.getInstance();
+      rolActual = prefs.getString('rol');
+    }
+    final invitado = rolActual == null || rolActual.isEmpty;
+    if (!mounted) return;
+    if (invitado) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetallesClinicaSinSesion(
+            imageUrl: proc.imagen,
+            nombre: proc.nombre,
+            duracion: proc.duracion,
+            precio: proc.precio,
+          ),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetallesClinica(
+            imageUrl: proc.imagen,
+            nombre: proc.nombre,
+            duracion: proc.duracion,
+            precio: proc.precio,
+          ),
+        ),
+      );
+    }
   }
 }

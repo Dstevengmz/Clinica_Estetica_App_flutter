@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'src/views/splash_screen.dart';
-import 'src/views/PantallaLoginview.dart';
-import 'src/views/RegistrarUsuarioView.dart';
-import 'src/views/MenuPrincipalview.dart';
-import 'src/views/DashboardDoctorview.dart';
-import 'src/views/MenuPrincipalConectadoView.dart';
+import 'src/splash_screen.dart';
+import 'src/views/pantallaprincipal.dart';
+import 'src/views/iniciodesesion/iniciarsesion.dart';
+import './src/views/doctor/paneldoctor.dart';
+import 'src/views/usuario/panelusuario.dart';
+import 'src/views/historial/ListaHistorialClinico.dart';
 
-void main() async {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
   runApp(const MyApp());
@@ -24,11 +25,11 @@ class MyApp extends StatelessWidget {
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/registro': (context) => const RegistrarUsuario(),
-        'perfildoctor': (context) => const PantallaDoctor(),
-        '/home': (context) => MenuPrincipalSesion(),
-        '/homeconectado': (context) => MenuPrincipalConectadoSesion(),
+        '/pantallaprincipal': (context) => const PantallaPrincipal(),
+        '/iniciarsesion': (context) => const IniciarSesion(),
+        '/perfildoctor': (context) => const PantallaDoctor(),
+        '/panelusuario': (context) => const PantallaUsuario(),
+        '/historiales': (context) => const ListaHistorialClinico(),
       },
     );
   }
