@@ -90,6 +90,15 @@ class MenuLateral extends StatelessWidget {
           onTap: () => Navigator.pushNamed(context, '/panelusuario'),
         ),
       );
+      items.add(
+        ListTile(
+          iconColor: Colors.white,
+          leading: const Icon(Icons.event_note),
+          textColor: Colors.white,
+          title: const Text('Mis Citas'),
+          onTap: () => Navigator.pushNamed(context, '/miscitas'),
+        ),
+      );
     }
 
     items.add(

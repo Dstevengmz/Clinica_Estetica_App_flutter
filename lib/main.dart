@@ -6,6 +6,7 @@ import 'src/views/iniciodesesion/iniciarsesion.dart';
 import './src/views/doctor/paneldoctor.dart';
 import 'src/views/usuario/panelusuario.dart';
 import 'src/views/historial/ListaHistorialClinico.dart';
+import 'src/views/citas/MisCitasPage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/perfildoctor': (context) => const PantallaDoctor(),
         '/panelusuario': (context) => const PantallaUsuario(),
         '/historiales': (context) => const ListaHistorialClinico(),
+        '/miscitas': (context) => const MisCitasPage(),
       },
     );
   }
